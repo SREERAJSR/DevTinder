@@ -2,12 +2,16 @@ const express = require('express');
 
 const app = express();
 
-app.use('/user', (req, res) => {
-    res.send("HAHAHAHAHAHH")
+
+app.get('/user/:userId/:name/:password', (req, res) => {
+
+    res.send({firstname:"sreeraj",lastname:"S R",userId:req.params.userId,name:req.params.name,password:req.params.password})
 })
-app.get('/user', (req, res) => {
-    res.send({firstname:"sreeraj",lastname:"S R"})
-})
+
+// query params
+// app.get('/user', (req, res) => {
+//     res.send({firstname:"sreeraj",lastname:"S R",password:req.query.pass,userId:req.query.userId})
+// })
 
 app.post('/user', (req, res) => {
     res.send("saved user details")
