@@ -1,8 +1,9 @@
 const express = require('express');
 const {adminAuth, userAuth} = require('./middlewares/authMiddlewares')
-
+const morgan = require('morgan')
 const app = express();
 
+app.use(morgan('dev'))
 app.use('/admin',adminAuth)
 
 app.get('/admin', (req, res) => {
@@ -13,7 +14,7 @@ app.use('/user/home',userAuth,   (req, res) => {
     res.send('User home page')
 })
 
-app.use('/user/login', (req, res) => {
+app.all('/user', (req, res) => {
     res.send('login page')
 })
 
@@ -23,4 +24,4 @@ app.get('/admin/getData', (req, res) => {
 
 app.listen(7777, () => {
     console.log('server is running on port 7777');
-})
+}) 
