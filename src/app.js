@@ -2,54 +2,36 @@ const express = require('express');
 const {adminAuth, userAuth} = require('./middlewares/authMiddlewares')
 const morgan = require('morgan')
 const app = express();
+const connectDB = require('./configs/database')
+const User = require('./models/user')
 
 app.use(morgan('dev'))
 
-app.use('/admin', (req, res) => {
+
+app.post("/signup", async (req, res) => {
+    
+    const user = new User({
+        firstName: 'Nimisha',
+        lastName: "Ps",
+        age: 23,
+        email: 'psnimisha@gmail.ocm',
+         gender:'female'
+    })
     try {
-        if (1 === 1) {
-            throw new Error('1 is equal')
-        }
+        await user.save()
+        res.status(200).send("User data saved successfully")
     } catch (error) {
-        console.log(error.message)
-        res.status(500).send(error.message)
+        res.status(500).send("Error in saving user datas, the error"+error)
     }
 })
 
-app.use("/user", (req, res) => {
 
-    if (1 === 1) throw new Error('not token')
-    else res.send('hai from home')
+connectDB().then(() => {
+    console.log('db connection established');
+    app.listen(7777, () => {
+        console.log('server is running on port 7777');
+    })
+}).catch((err) => {
+    console.log(err, 'database connection error');
 })
-app.use('/', (err, req, res, next) => {
-    if (err) {
-        res.status(500).send("something went wrong")
-    }
-})
-// app.use('/admin',adminAuth)
 
-// app.get('/admin', (req, res) => {
-//     res.send('admin dashboard')
-// })
-
-// app.use('/user/home',userAuth,   (req, res) => {
-//     res.send('User home page')
-// })
-
-// app.all('/user', (req, res) => {
-//     res.send('login page')
-// })
-
-// app.get('/admin/getData', (req, res) => {
-//     res.send("fetching all data from admin ")
-// })
-
-// app.use('/', (err, req, res, next) => {
-//     if (err) {
-//         res.status(500).send("something went wrong")
-//     }
-// })
-
-app.listen(7777, () => {
-    console.log('server is running on port 7777');
-}) 
