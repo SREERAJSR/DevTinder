@@ -38,14 +38,40 @@ app.get('/user', async (req, res) => {
 
 app.get("/feed", async (req, res) => {
     try {
-        const users = await User.find({})
+        const users = await User.findById(req.body.id)
         
         res.status(200).send(users)
     } catch (error) {
         res.status(500).send("something went wrong")
     }
 
- })
+})
+ 
+app.delete('/user', async(req, res) => {
+    const userId = req.body.id;
+
+    try {
+        await User.findByIdAndDelete(userId)
+        res.send("user data deleted succesfully")
+    } catch (error) {
+        res.status(500).send("something went wrong")
+    }
+
+})
+
+app.patch("/user", async (req, res) => {
+    const userId = req.body.id
+    try {
+        const user = await User.findByIdAndUpdate(userId, req.body, { returnDocument: "after" })
+        console.log(user)
+
+        res.send("user data updated succesfully")
+    } catch (error) {
+        console.log(error);
+        res.status(500).send("something went wrong")
+    }
+
+}) 
 
 connectDB().then(() => {
     console.log('db connection established');
