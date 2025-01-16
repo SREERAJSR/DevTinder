@@ -1,5 +1,5 @@
 const express = require('express');
-const {adminAuth, userAuth} = require('./middlewares/authMiddlewares')
+const {userAuth} = require('./middlewares/authMiddlewares')
 const morgan = require('morgan')
 const app = express();
 const connectDB = require('./configs/database')
@@ -47,14 +47,14 @@ app.post('/login', async (req, res) => {
         if (!user) {
             throw new Error("Invalid credentails")
         }
-        const hashedPassword = user.password;
-        const isPasswordCorrect = await bcrypt.compare(password, hashedPassword);
+        const isPasswordCorrect = await user.validatePassword(password)
 
         if (!isPasswordCorrect) {
             throw new Error('Invaid credentials')
         }
-        const token = jwt.sign({id:user._id}, 'sfsjfskdfkfdhfdkjfhj')
-        res.cookie('token',token)
+        const token =await  user.getJwtToken()
+        res.cookie('token', token, { expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) });
+
         res.send("user logged succesfully")
     } catch (error) {
         res.status(500).send('ERROR:'+error.message)
@@ -62,30 +62,33 @@ app.post('/login', async (req, res) => {
   
 })
 
-app.get('/profile', async (req, res) => {
+
+
+app.get('/profile',userAuth, async (req, res) => {
     try {
-        const tokens = req.cookies;
-        const { token } = tokens;
-        if (!token) {
-            throw new Error("No token")
-        }
-        const decodedJwt =  jwt.verify(token,'sfsjfskdfkfdhfdkjfhj')
-        const user = await User.findById(decodedJwt.id.toString());
-
-        if (!user) {
-            throw new Error("User doesn't exist");
-        }
-
+        const user = req.user;
         res.send(user)
     } catch (error) {
         res.status(500).send('ERROR:' + error.message)
     }
     
 })
+
+app.post('/sendConnectionRequest', userAuth,async (req, res) => {
+    try {
+        const userId = req.user
+        const user = await User.findById(userId)
+        
+        res.send(`${user.firstName} sented connection request`)
+        
+    } catch (error) {
+        res.status(500).send('ERROR:' + error.message)
+    }
+})
 app.get('/user', async (req, res) => {
     const email = req.body.email;
 
-    try {
+    try { 
         const user = await User.findOne({ email: email });
         if (!user) {
             res.status(404).send("user not found    ")

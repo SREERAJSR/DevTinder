@@ -1,26 +1,29 @@
-const adminAuth = (req, res, next) => {
-    const token = req.query.token;
+const jwt = require('jsonwebtoken');
+const User = require('../models/user')
 
-    if (token === 'xyz') {
+
+const userAuth =async (req, res, next) => {
+    try {
+        const { token } = req.cookies;
+        if (!token) {
+            throw new Error("Token is invalid")
+        }
+        const decoded = await jwt.verify(token, 'sfsjfskdfkfdhfdkjfhj')
+        const user = await User.findById(decoded.id)
+        if (!user) {
+            throw new Error('Token is expired')
+        }
+        req.user = user
         next()
-    } else {
-        res.status(401).send('unauthorized admin')
+        
+    } catch (error) {
+        res.status(500).send('ERROR:'+error.message)
     }
-}
-
-const userAuth = (req, res, next) => {
-    const token = req.query.token;
-
-    if (token === 'xyz') {
-        next()
-    } else {
-        res.status(401).send('unauthorized user')
-    }
+  
 }
 
 
 
 module.exports = {
-    adminAuth,
     userAuth
 }

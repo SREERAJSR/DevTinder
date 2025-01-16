@@ -1,6 +1,8 @@
 const { lowerCase } = require('lodash');
 const { Schema, model } = require('mongoose');
 const validator = require('validator');
+const jwt = require('jsonwebtoken')
+const bcrypt = require('bcrypt');
 const userSchema = new Schema({
     
     firstName: {
@@ -74,5 +76,18 @@ const userSchema = new Schema({
 }, {
     timestamps:true
 })
+
+userSchema.methods.getJwtToken = async function () {
+    const user = this
+    const token = await jwt.sign({ id: user._id }, 'sfsjfskdfkfdhfdkjfhj', { expiresIn: '7d' })
+    console.log(token);
+    return token
+}
+
+userSchema.methods.validatePassword = async function (inputPasswordByUser) {
+    const hashedPassword = this.password;
+    const isPasswordVerified = await bcrypt.compare(inputPasswordByUser, hashedPassword)
+    return isPasswordVerified
+}
 
 module.exports = model('user',userSchema)
