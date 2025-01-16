@@ -1,157 +1,18 @@
 const express = require('express');
-const {userAuth} = require('./middlewares/authMiddlewares')
 const morgan = require('morgan')
 const app = express();
 const connectDB = require('./configs/database')
-const User = require('./models/user')
-const { validateSignupApi } = require('./utils/validation')
-const bcrypt = require('bcrypt');
 const cookieParser = require('cookie-parser');
-const jwt = require('jsonwebtoken')
+const authRouter = require('./router/auth');
+const profileRouter = require('./router/profile');
+const requestRouter = require('./router/request')
 app.use(express.json())
 app.use(cookieParser())
 app.use(morgan('dev'))
 
-// signup Api
-app.post("/signup", async (req, res) => {
-    try {
-        validateSignupApi(req)
-        const {firstName, lastName, gender, age, photoUrl, password, email, skills} = req.body
-        const hashedPassword = await bcrypt.hash(password, 10)
-        
-
-        const user = new User({
-            firstName: firstName,
-            lastName: lastName,
-            age: age,
-            email: email,
-            password: hashedPassword,
-            skills: skills,
-            gender:gender
-    })
- 
-        await user.save()
-        res.status(200).send("User data saved successfully")
-    } catch (error) {
-        res.status(500).send("Error in saving user datas, the error"+error)
-    }
-})
-
-
-// login api
-app.post('/login', async (req, res) => {
-    
-    try {
-        const { email, password } = req.body;
-        const user = await User.findOne({ email: email });
-        if (!user) {
-            throw new Error("Invalid credentails")
-        }
-        const isPasswordCorrect = await user.validatePassword(password)
-
-        if (!isPasswordCorrect) {
-            throw new Error('Invaid credentials')
-        }
-        const token =await  user.getJwtToken()
-        res.cookie('token', token, { expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) });
-
-        res.send("user logged succesfully")
-    } catch (error) {
-        res.status(500).send('ERROR:'+error.message)
-    }
-  
-})
-
-
-
-app.get('/profile',userAuth, async (req, res) => {
-    try {
-        const user = req.user;
-        res.send(user)
-    } catch (error) {
-        res.status(500).send('ERROR:' + error.message)
-    }
-    
-})
-
-app.post('/sendConnectionRequest', userAuth,async (req, res) => {
-    try {
-        const userId = req.user
-        const user = await User.findById(userId)
-        
-        res.send(`${user.firstName} sented connection request`)
-        
-    } catch (error) {
-        res.status(500).send('ERROR:' + error.message)
-    }
-})
-app.get('/user', async (req, res) => {
-    const email = req.body.email;
-
-    try { 
-        const user = await User.findOne({ email: email });
-        if (!user) {
-            res.status(404).send("user not found    ")
-        }
-        res.status(200).send(user)
-    } catch (error) {
-        res.status(500).send("something went wrong")
-    }
-    
-})
-
-app.get("/feed", async (req, res) => {
-    try {
-        const users = await User.findById(req.body.id)
-        
-        res.status(200).send(users)
-    } catch (error) {
-        res.status(500).send("something went wrong")
-    }
-
-})
- 
-app.delete('/user', async(req, res) => {
-    const userId = req.body.id;
-
-    try {
-        await User.findByIdAndDelete(userId)
-        res.send("user data deleted succesfully")
-    } catch (error) {
-        res.status(500).send("something went wrong")
-    }
-
-})
-
-app.patch("/user/:id", async (req, res) => {
-    const userId = req.params?.id
-    try {
-        const data = req.body
-        console.log(data);
-        const allowedUpdate = ['skills', 'age', 'gender', 'photoUrl']
-        const isAllowedUpdate = Object.keys(data).every((key) => allowedUpdate.includes(key))
-        if (!isAllowedUpdate) {
-            throw new Error("Can't update with the given datas")
-        }
-        if (data.skills.length > 10) {
-            throw new Error("skills can't be more than 10")
-        }
-        if (!data.photoUrl) {
-                throw new Error("photo url can't be empty ")
-        }
-  
-        const user = await User.findByIdAndUpdate(userId, req.body, { returnDocument: "after" ,runValidators:true})
-        console.log(user)
-
-        res.send("user data updated succesfully")
-    } catch (error) {
-        console.log(error);
-        res.status(500).send("Error with updating data"+error.message)
-    }
-
-}) 
-
-
+app.use('/', authRouter)
+app.use('/', profileRouter)
+app.use('/',requestRouter)
 
 connectDB().then(() => {
     console.log('db connection established');
