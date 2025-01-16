@@ -47,6 +47,14 @@ const userSchema = new Schema({
         required: true,
         minLength:8
         
+    },
+    skills: {
+        type: [String],
+        default:["nodejs"]
+    },
+    photoUrl: {
+        type: String,
+        default:'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQABqQIdskCD9BK0I81EbVfV9tTz320XvJ35A&s'
     }
 }, {
     timestamps:true
