@@ -62,7 +62,7 @@ app.delete('/user', async(req, res) => {
 app.patch("/user", async (req, res) => {
     const userId = req.body.id
     try {
-        const user = await User.findByIdAndUpdate(userId, req.body, { returnDocument: "after" })
+        const user = await User.findByIdAndUpdate(userId, req.body, { returnDocument: "after" ,runValidators:true})
         console.log(user)
 
         res.send("user data updated succesfully")
@@ -72,6 +72,8 @@ app.patch("/user", async (req, res) => {
     }
 
 }) 
+
+
 
 connectDB().then(() => {
     console.log('db connection established');
