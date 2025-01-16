@@ -6,9 +6,10 @@ const connectDB = require('./configs/database')
 const User = require('./models/user')
 const { validateSignupApi } = require('./utils/validation')
 const bcrypt = require('bcrypt');
-
+const cookieParser = require('cookie-parser');
+const jwt = require('jsonwebtoken')
 app.use(express.json())
-
+app.use(cookieParser())
 app.use(morgan('dev'))
 
 // signup Api
@@ -52,7 +53,8 @@ app.post('/login', async (req, res) => {
         if (!isPasswordCorrect) {
             throw new Error('Invaid credentials')
         }
-
+        const token = jwt.sign({id:user._id}, 'sfsjfskdfkfdhfdkjfhj')
+        res.cookie('token',token)
         res.send("user logged succesfully")
     } catch (error) {
         res.status(500).send('ERROR:'+error.message)
@@ -60,6 +62,26 @@ app.post('/login', async (req, res) => {
   
 })
 
+app.get('/profile', async (req, res) => {
+    try {
+        const tokens = req.cookies;
+        const { token } = tokens;
+        if (!token) {
+            throw new Error("No token")
+        }
+        const decodedJwt =  jwt.verify(token,'sfsjfskdfkfdhfdkjfhj')
+        const user = await User.findById(decodedJwt.id.toString());
+
+        if (!user) {
+            throw new Error("User doesn't exist");
+        }
+
+        res.send(user)
+    } catch (error) {
+        res.status(500).send('ERROR:' + error.message)
+    }
+    
+})
 app.get('/user', async (req, res) => {
     const email = req.body.email;
 
