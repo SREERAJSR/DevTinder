@@ -4,21 +4,60 @@ const morgan = require('morgan')
 const app = express();
 const connectDB = require('./configs/database')
 const User = require('./models/user')
+const { validateSignupApi } = require('./utils/validation')
+const bcrypt = require('bcrypt');
 
 app.use(express.json())
 
 app.use(morgan('dev'))
 
-
+// signup Api
 app.post("/signup", async (req, res) => {
-
-    const user = new User(req.body)
     try {
+        validateSignupApi(req)
+        const {firstName, lastName, gender, age, photoUrl, password, email, skills} = req.body
+        const hashedPassword = await bcrypt.hash(password, 10)
+        
+
+        const user = new User({
+            firstName: firstName,
+            lastName: lastName,
+            age: age,
+            email: email,
+            password: hashedPassword,
+            skills: skills,
+            gender:gender
+    })
+ 
         await user.save()
         res.status(200).send("User data saved successfully")
     } catch (error) {
         res.status(500).send("Error in saving user datas, the error"+error)
     }
+})
+
+
+// login api
+app.post('/login', async (req, res) => {
+    
+    try {
+        const { email, password } = req.body;
+        const user = await User.findOne({ email: email });
+        if (!user) {
+            throw new Error("Invalid credentails")
+        }
+        const hashedPassword = user.password;
+        const isPasswordCorrect = await bcrypt.compare(password, hashedPassword);
+
+        if (!isPasswordCorrect) {
+            throw new Error('Invaid credentials')
+        }
+
+        res.send("user logged succesfully")
+    } catch (error) {
+        res.status(500).send('ERROR:'+error.message)
+    }
+  
 })
 
 app.get('/user', async (req, res) => {
