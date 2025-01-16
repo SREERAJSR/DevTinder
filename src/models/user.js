@@ -1,6 +1,6 @@
 const { lowerCase } = require('lodash');
 const { Schema, model } = require('mongoose');
-
+const validator = require('validator');
 const userSchema = new Schema({
     
     firstName: {
@@ -21,12 +21,17 @@ const userSchema = new Schema({
         type: String,
         unique: true,
         required: true,
-        validate: {
-            validator(v) {
-                var re =/^((?!\.)[\w-_.]*[^.])(@\w+)(\.\w+(\.\w+)?[^.\W])$/gim;
-                return re.test(v)
-            },
-            message:'provided email is not valid'
+        // validate: {
+        //     validator(v) {
+        //         var re =/^((?!\.)[\w-_.]*[^.])(@\w+)(\.\w+(\.\w+)?[^.\W])$/gim;
+        //         return re.test(v)
+        //     },
+        //     message:'provided email is not valid'
+        // },
+        validate(val) {
+            if (!validator.isEmail(val)) {
+                throw new Error('email is not valid')
+            }
         },
         lowerCase: true,
         trim:true
@@ -45,7 +50,12 @@ const userSchema = new Schema({
         type: String,
         trim: true,
         required: true,
-        minLength:8
+        minLength: 8,
+        validate(value) {
+            if (!validator.isStrongPassword(value, [{ minLength: 9, minLowercase:1 }])) {
+                throw new Error("password need to match with pattern")
+            }
+        }
         
     },
     skills: {
@@ -54,7 +64,12 @@ const userSchema = new Schema({
     },
     photoUrl: {
         type: String,
-        default:'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQABqQIdskCD9BK0I81EbVfV9tTz320XvJ35A&s'
+        default: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQABqQIdskCD9BK0I81EbVfV9tTz320XvJ35A&s',
+        validate(val) {
+            if (!validator.isURL(val)) {
+                throw new Error(" invalid photo url")
+            }
+        }
     }
 }, {
     timestamps:true
