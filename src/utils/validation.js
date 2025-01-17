@@ -1,3 +1,4 @@
+const bcrypt = require('bcrypt');
 const validator = require("validator");
 const validateSignupApi = (req) => {
     const { firstName, lastName, gender, email, password } = req.body;
@@ -35,9 +36,33 @@ const sanitizeProfileEditRequestBody =async(req) => {
             }
         }
     })
+
+
+}
+const checkOldPasswordAndNewPassword = (req) => {
+    if (!req.body.oldPassword) {
+        throw new Error("old password is required")
+    } else if (!req.body.newPassword) {
+        throw new Error("new password is required")
+    }
+    return true
+}
+
+const checkOldPasswordIsRight = async(oldPassword,hashedPassword) => {
+    const isPasswordVerified = bcrypt.compare(oldPassword, hashedPassword)
+    return isPasswordVerified
+}
+
+const validateNewPassword = async (newPassword) => {
+    if (!validator.isStrongPassword(newPassword)) {
+        throw new Error("password is not strong")
+    }
 }
 module.exports = {
     validateSignupApi,
     validateProfileEditRequestBody,
-    sanitizeProfileEditRequestBody
+    sanitizeProfileEditRequestBody,
+    checkOldPasswordAndNewPassword,
+    checkOldPasswordIsRight,
+    validateNewPassword
 }
